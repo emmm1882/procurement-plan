@@ -7,6 +7,7 @@
         </el-form-item>
         <el-form-item label="计划状态">
           <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
+            <el-option label="不限" value=""></el-option>
             <el-option label="已保存" value="SAVED"></el-option>
             <el-option label="审批中" value="APPROVING"></el-option>
             <el-option label="审批退回" value="REJECTED"></el-option>
@@ -15,51 +16,34 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleQuery">查询</el-button>
-          <el-button @click="resetQuery">重置</el-button>
+        </el-form-item>
+        <el-form-item style="float:right; margin-left:auto;">
+          <el-button type="primary" @click="handleAdd">新增</el-button>
         </el-form-item>
       </el-form>
-    </div>
-
-    <div class="operation-bar">
-      <el-button type="primary" @click="handleAdd">新增计划</el-button>
     </div>
 
     <el-table
       v-loading="loading"
       :data="planList"
       border
-      style="width: 100%">
-      <el-table-column type="selection" width="55"></el-table-column>
-      <el-table-column prop="planName" label="计划名称"></el-table-column>
-      <el-table-column prop="year" label="所属年度"></el-table-column>
-      <el-table-column prop="status" label="状态">
+      style="width: 100%; max-width: 1200px; overflow-x: auto;">
+      <el-table-column prop="year" label="所属年度" width="140" />
+      <el-table-column prop="dept" label="编制部门" width="120" />
+      <el-table-column prop="creator" label="编制人" width="120" />
+      <el-table-column prop="createTime" label="编制时间" width="180" />
+      <el-table-column prop="status" label="状态" width="100">
         <template slot-scope="scope">
           <el-tag :type="getStatusType(scope.row.status)">
             {{ getStatusText(scope.row.status) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="创建时间"></el-table-column>
-      <el-table-column label="操作" width="340">
+      <el-table-column label="操作" width="180">
         <template slot-scope="scope">
-          <div style="display: flex; gap: 4px;">
-            <el-button size="mini" @click="handleView(scope.row)">查看</el-button>
-            <el-button 
-              size="mini" 
-              type="primary" 
-              @click="handleEdit(scope.row)"
-              v-if="scope.row.status === 'SAVED' || scope.row.status === 'REJECTED'">
-              修改
-            </el-button>
-            <el-button 
-              size="mini" 
-              type="danger" 
-              @click="handleDelete(scope.row)"
-              v-if="scope.row.status === 'SAVED'">
-              删除
-            </el-button>
-            <el-button size="mini" type="warning" @click="handleStatus(scope.row, 'REJECTED')" v-if="scope.row.status === 'APPROVING'">退回</el-button>
-          </div>
+          <el-button type="text" @click="handleView(scope.row)">查看</el-button>
+          <el-button v-if="scope.row.status === 'SAVED' || scope.row.status === '已保存' || scope.row.status === 'REJECTED' || scope.row.status === '审批退回'" type="text" @click="handleEdit(scope.row)">修改</el-button>
+          <el-button v-if="scope.row.status === 'SAVED' || scope.row.status === '已保存'" type="text" style="color:#f56c6c" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -116,15 +100,6 @@ export default {
       this.queryParams.pageNum = 1
       this.getList()
     },
-    resetQuery() {
-      this.queryParams = {
-        pageNum: 1,
-        pageSize: 10,
-        name: '',
-        status: ''
-      }
-      this.getList()
-    },
     handleSizeChange(val) {
       this.queryParams.pageSize = val
       this.getList()
@@ -152,31 +127,31 @@ export default {
         })
       })
     },
-    handleStatus(row, status) {
-      this.$confirm(`确定将该计划状态变更为${this.getStatusText(status)}吗？`, '提示', { type: 'warning' }).then(() => {
-        this.$api.updatePlanStatus(row.id, status).then(() => {
-          this.$message.success('状态变更成功')
-          this.getList()
-        })
-      })
-    },
     getStatusType(status) {
       const statusMap = {
         'SAVED': 'info',
+        '已保存': 'info',
         'APPROVING': 'warning',
+        '审批中': 'warning',
         'REJECTED': 'danger',
-        'EFFECTIVE': 'success'
+        '审批退回': 'danger',
+        'EFFECTIVE': 'success',
+        '已生效': 'success'
       }
-      return statusMap[status]
+      return statusMap[status] || 'info'
     },
     getStatusText(status) {
       const statusMap = {
         'SAVED': '已保存',
+        '已保存': '已保存',
         'APPROVING': '审批中',
+        '审批中': '审批中',
         'REJECTED': '审批退回',
-        'EFFECTIVE': '已生效'
+        '审批退回': '审批退回',
+        'EFFECTIVE': '已生效',
+        '已生效': '已生效'
       }
-      return statusMap[status]
+      return statusMap[status] || status
     }
   }
 }
@@ -191,10 +166,6 @@ export default {
     padding: 20px;
     background: #fff;
     border-radius: 4px;
-  }
-  
-  .operation-bar {
-    margin-bottom: 20px;
   }
   
   .pagination-container {

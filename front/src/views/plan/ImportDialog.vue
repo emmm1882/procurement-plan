@@ -1,5 +1,5 @@
 <template>
-  <el-dialog title="导入明细" :visible.sync="visible" width="500px" @close="handleClose">
+  <el-dialog title="明细导入" :visible.sync="visible" width="600px" @close="handleClose">
     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
       <div style="flex:1; text-align:center;">
         <div style="font-size:40px; color:#67c23a; margin-bottom:8px;">
@@ -28,6 +28,7 @@
     </div>
     <span slot="footer" class="dialog-footer">
       <el-button @click="handleClose">取 消</el-button>
+      <el-button type="primary" @click="handleConfirm">确 定</el-button>
     </span>
   </el-dialog>
 </template>
@@ -87,6 +88,9 @@ export default {
     handleClose() {
       this.visible = false
       this.$emit('close')
+    },
+    handleConfirm() {
+      // Implementation of handleConfirm method
     }
   }
 }

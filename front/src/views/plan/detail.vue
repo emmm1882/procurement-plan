@@ -9,10 +9,18 @@
       <el-descriptions class="margin-top" title="基本信息" :column="2" border>
         <el-descriptions-item label="计划名称">{{ planInfo.planName }}</el-descriptions-item>
         <el-descriptions-item label="所属年度">{{ planInfo.year }}</el-descriptions-item>
-        <el-descriptions-item label="状态">
-          <el-tag :type="getStatusType(planInfo.status)">{{ getStatusText(planInfo.status) }}</el-tag>
+        <el-descriptions-item label="所属公司">{{ planInfo.company }}</el-descriptions-item>
+        <el-descriptions-item label="编制部门">{{ planInfo.dept }}</el-descriptions-item>
+        <el-descriptions-item label="编制人">{{ planInfo.creator }}</el-descriptions-item>
+        <el-descriptions-item label="编制时间">{{ planInfo.createTime }}</el-descriptions-item>
+        <el-descriptions-item label="附件">
+          <div v-if="parsedAttachmentList.length">
+            <div v-for="file in parsedAttachmentList" :key="file.filename">
+              <el-link :href="`/api/attachment/download/${file.filename}`" target="_blank" type="primary">{{ file.originName }}</el-link>
+            </div>
+          </div>
+          <div v-else>无</div>
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ planInfo.createTime }}</el-descriptions-item>
       </el-descriptions>
 
       <div class="attachment-section">
@@ -30,30 +38,18 @@
       <div class="detail-section">
         <h3>计划明细</h3>
         <el-table :data="detailList" border style="width: 100%">
-          <el-table-column type="index" width="50"></el-table-column>
-          <el-table-column prop="itemName" label="采购名称"></el-table-column>
-          <el-table-column prop="category" label="采购类别">
-            <template slot-scope="scope">
-              {{ getCategoryText(scope.row.category) }}
-            </template>
+          <el-table-column type="index" label="序号" width="50" />
+          <el-table-column prop="itemName" label="采购名称" />
+          <el-table-column prop="category" label="采购类别" />
+          <el-table-column prop="method" label="采购方式" />
+          <el-table-column prop="estimate" label="拟采购估价">
+            <template slot-scope="scope">{{ scope.row.estimate }} 元</template>
           </el-table-column>
-          <el-table-column prop="method" label="采购方式">
-            <template slot-scope="scope">
-              {{ getMethodText(scope.row.method) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="estimate" label="拟采购估价"></el-table-column>
           <el-table-column prop="planTime" label="计划采购时间">
-            <template slot-scope="scope">
-              {{ scope.row.planTime ? (scope.row.planTime.substr(0, 10)) : '' }}
-            </template>
+            <template slot-scope="scope">{{ scope.row.planTime ? (scope.row.planTime.substr(0, 10)) : '' }}</template>
           </el-table-column>
-          <el-table-column prop="fundSource" label="资金来源">
-            <template slot-scope="scope">
-              {{ getFundSourceText(scope.row.fundSource) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="remark" label="备注"></el-table-column>
+          <el-table-column prop="fundSource" label="资金来源" />
+          <el-table-column prop="remark" label="备注" />
         </el-table>
       </div>
     </el-card>
