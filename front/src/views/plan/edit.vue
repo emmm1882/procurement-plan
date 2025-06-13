@@ -8,15 +8,18 @@
       
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="所属年度" prop="year">
-          <el-select v-model="form.year" placeholder="请选择年度" style="width:120px;">
-            <el-option label="2024年/年度" value="2024年/年度" />
-            <el-option label="2024年/上半年" value="2024年/上半年" />
-            <el-option label="2024年/下半年" value="2024年/下半年" />
-            <el-option label="2025年/年度" value="2025年/年度" />
-            <el-option label="2025年/上半年" value="2025年/上半年" />
-            <el-option label="2025年/下半年" value="2025年/下半年" />
-            <el-option label="2025年/一季度" value="2025年/一季度" />
-          </el-select>
+          <el-row :gutter="10">
+            <el-col :span="8">
+              <el-select v-model="yearValue" placeholder="请选择年份">
+                <el-option v-for="item in yearList" :key="item" :label="item+'年'" :value="item" />
+              </el-select>
+            </el-col>
+            <el-col :span="10">
+              <el-select v-model="periodValue" placeholder="请选择时间段">
+                <el-option v-for="item in periodList" :key="item" :label="item" :value="item" />
+              </el-select>
+            </el-col>
+          </el-row>
         </el-form-item>
         <el-form-item label="所属公司">
           <el-input v-model="form.company" placeholder="自动带入/可编辑" />
@@ -147,6 +150,10 @@ export default {
           { required: true, message: '请选择所属年度', trigger: 'change' }
         ]
       },
+      yearList: this.generateYearList(),
+      periodList: ['年度', '上半年', '下半年', '一季度'],
+      yearValue: '',
+      periodValue: '',
       fileList: [],
       uploadUrl: process.env.VUE_APP_BASE_API + '/procurement-plans/attachments',
       uploadHeaders: {
@@ -156,15 +163,39 @@ export default {
       showImportDialog: false
     }
   },
+  watch: {
+    yearValue(val) { this.updateYearField(); },
+    periodValue(val) { this.updateYearField(); },
+  },
   created() {
     this.getDetail()
   },
   methods: {
+    generateYearList() {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      return [currentYear, currentYear + 1, currentYear + 2];
+    },
+    updateYearField() {
+      if (this.yearValue && this.periodValue) {
+        this.form.year = `${this.yearValue}年/${this.periodValue}`;
+      } else {
+        this.form.year = '';
+      }
+    },
     getDetail() {
       const id = this.$route.params.id
       getPlanDetail(id).then(response => {
         const { id, planName, year, attachment } = response.data
         this.form = { ...this.form, id, planName, year, attachment }
+        // 解析所属年度
+        if (this.form.year) {
+          const match = this.form.year.match(/(\d{4})年\/(.+)/);
+          if (match) {
+            this.yearValue = match[1];
+            this.periodValue = match[2];
+          }
+        }
         // 解析附件
         if (attachment) {
           this.fileList = attachment.split(',').map(item => {

@@ -12,7 +12,7 @@
         <el-descriptions-item label="所属公司">{{ planInfo.company }}</el-descriptions-item>
         <el-descriptions-item label="编制部门">{{ planInfo.dept }}</el-descriptions-item>
         <el-descriptions-item label="编制人">{{ planInfo.creator }}</el-descriptions-item>
-        <el-descriptions-item label="编制时间">{{ planInfo.createTime }}</el-descriptions-item>
+        <el-descriptions-item label="编制时间">{{ planInfo.createTime ? planInfo.createTime.substr(0, 10) : '' }}</el-descriptions-item>
         <el-descriptions-item label="附件">
           <div v-if="parsedAttachmentList.length">
             <div v-for="file in parsedAttachmentList" :key="file.filename">

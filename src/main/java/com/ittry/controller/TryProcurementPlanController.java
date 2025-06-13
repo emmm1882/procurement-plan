@@ -74,23 +74,56 @@ public class TryProcurementPlanController {
     }
 
     @PostMapping
-    public Object save(@RequestBody TryProcurementPlan plan) {
+    public Object save(@RequestBody Map<String, Object> param) {
+        // 1. 解析主表
+        TryProcurementPlan plan = new TryProcurementPlan();
+        plan.setPlanName((String) param.get("planName"));
         if (plan.getPlanName() == null || plan.getPlanName().trim().isEmpty()) {
             throw new IllegalArgumentException("采购计划名称不能为空");
         }
-        if (plan.getCompany() == null || plan.getCompany().trim().isEmpty()) {
-            plan.setCompany("默认单位");
-        }
-        if (plan.getDept() == null || plan.getDept().trim().isEmpty()) {
-            plan.setDept("默认部门");
-        }
-        if (plan.getCreator() == null || plan.getCreator().trim().isEmpty()) {
-            plan.setCreator("系统用户");
-        }
-        if (plan.getCreateTime() == null) {
-            plan.setCreateTime(new java.util.Date());
-        }
+        plan.setYear((String) param.get("year"));
+        plan.setCompany((String) param.get("company"));
+        plan.setDept((String) param.get("dept"));
+        plan.setCreator((String) param.get("creator"));
+        plan.setAttachment((String) param.get("attachment"));
+        plan.setStatus(param.get("status") != null ? mapStatusToDb(param.get("status").toString()) : "SAVED");
+        plan.setCreateUserId((String) param.get("createUserId"));
+        plan.setCreateDate(new java.util.Date());
+        plan.setUpdateUserId((String) param.get("updateUserId"));
+        plan.setUpdateDate(new java.util.Date());
+        plan.setCreateTime(new java.util.Date());
         planService.save(plan);
+        // 2. 解析明细并保存
+        if (param.get("details") instanceof List) {
+            List<Map<String, Object>> details = (List<Map<String, Object>>) param.get("details");
+            for (Map<String, Object> d : details) {
+                TryProcurementDetail detail = new TryProcurementDetail();
+                detail.setPlanId(plan.getId());
+                detail.setItemName(
+                    d.get("itemName") != null ? d.get("itemName").toString() :
+                    (d.get("name") != null ? d.get("name").toString() : null)
+                );
+                detail.setCategory(d.get("category") != null ? d.get("category").toString() : null);
+                detail.setMethod(d.get("method") != null ? d.get("method").toString() : null);
+                if (d.get("estimate") != null && !"".equals(d.get("estimate"))) {
+                    detail.setEstimate(Double.valueOf(d.get("estimate").toString()));
+                } else if (d.get("estimatedAmount") != null && !"".equals(d.get("estimatedAmount"))) {
+                    detail.setEstimate(Double.valueOf(d.get("estimatedAmount").toString()));
+                }
+                if (d.get("planTime") != null && !"".equals(d.get("planTime"))) {
+                    String dateStr = d.get("planTime").toString();
+                    if (dateStr.length() > 10) dateStr = dateStr.substring(0, 10);
+                    detail.setPlanTime(java.sql.Date.valueOf(dateStr));
+                } else if (d.get("plannedTime") != null && !"".equals(d.get("plannedTime"))) {
+                    String dateStr = d.get("plannedTime").toString();
+                    if (dateStr.length() > 10) dateStr = dateStr.substring(0, 10);
+                    detail.setPlanTime(java.sql.Date.valueOf(dateStr));
+                }
+                detail.setFundSource(d.get("fundSource") != null ? d.get("fundSource").toString() : null);
+                detail.setRemark(d.get("remark") != null ? d.get("remark").toString() : null);
+                detailService.save(detail);
+            }
+        }
         Map<String, Object> resp = new HashMap<>();
         resp.put("code", 0);
         resp.put("msg", "success");

@@ -27,19 +27,23 @@
       v-loading="loading"
       :data="planList"
       border
-      style="width: 100%; max-width: 1200px; overflow-x: auto;">
-      <el-table-column prop="year" label="所属年度" width="140" />
-      <el-table-column prop="dept" label="编制部门" width="120" />
-      <el-table-column prop="creator" label="编制人" width="120" />
-      <el-table-column prop="createTime" label="编制时间" width="180" />
-      <el-table-column prop="status" label="状态" width="100">
+      style="width: 100%;">
+      <el-table-column prop="year" label="所属年度" align="center" />
+      <el-table-column prop="dept" label="编制部门" align="center" />
+      <el-table-column prop="creator" label="编制人" align="center" />
+      <el-table-column prop="createTime" label="编制时间" align="center">
+        <template slot-scope="scope">
+          {{ scope.row.createTime ? scope.row.createTime.substr(0, 10) : '' }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="status" label="状态" align="center">
         <template slot-scope="scope">
           <el-tag :type="getStatusType(scope.row.status)">
             {{ getStatusText(scope.row.status) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="180">
+      <el-table-column label="操作" align="center">
         <template slot-scope="scope">
           <el-button type="text" @click="handleView(scope.row)">查看</el-button>
           <el-button v-if="scope.row.status === 'SAVED' || scope.row.status === '已保存' || scope.row.status === 'REJECTED' || scope.row.status === '审批退回'" type="text" @click="handleEdit(scope.row)">修改</el-button>
@@ -172,5 +176,15 @@ export default {
     margin-top: 20px;
     text-align: right;
   }
+}
+
+.el-table th, .el-table td {
+  text-align: center !important;
+  vertical-align: middle !important;
+  white-space: nowrap;
+}
+
+.el-table {
+  width: 100%;
 }
 </style> 

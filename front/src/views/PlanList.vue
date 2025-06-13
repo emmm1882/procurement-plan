@@ -20,19 +20,23 @@
         <el-button type="primary" style="margin-left:auto;" @click="handleAdd">新增</el-button>
       </div>
       <el-table :data="list" border style="width: 100%;">
-        <el-table-column type="selection" width="50" />
-        <el-table-column prop="year" label="所属年度" width="140" />
-        <el-table-column prop="deptName" label="编制部门" width="120" />
-        <el-table-column prop="userName" label="编制人" width="120" />
-        <el-table-column prop="createDate" label="编制时间" width="140" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column type="selection" align="center" />
+        <el-table-column prop="year" label="所属年度" align="center" />
+        <el-table-column prop="deptName" label="编制部门" align="center" />
+        <el-table-column prop="userName" label="编制人" align="center" />
+        <el-table-column prop="createDate" label="编制时间" align="center">
+          <template slot-scope="scope">
+            {{ scope.row.createDate ? scope.row.createDate.substr(0, 10) : '' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" align="center">
           <template slot-scope="scope">
             <el-tag :type="statusTagType(scope.row.status)">
               {{ statusLabel(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180">
+        <el-table-column label="操作" align="center">
           <template slot-scope="scope">
             <el-button type="text" @click="handleView(scope.row)">查看</el-button>
             <el-button v-if="scope.row.status === '已保存'" type="text" @click="handleEdit(scope.row)">修改</el-button>
@@ -133,5 +137,13 @@ export default {
 <style scoped>
 .plan-list {
   padding: 24px;
+}
+.el-table th, .el-table td {
+  text-align: center !important;
+  vertical-align: middle !important;
+  white-space: nowrap;
+}
+.el-table {
+  width: 100%;
 }
 </style>

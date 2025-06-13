@@ -7,16 +7,22 @@
       </div>
       
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+        <el-form-item label="计划名称" prop="planName">
+          <el-input v-model="form.planName" placeholder="请输入计划名称" />
+        </el-form-item>
         <el-form-item label="所属年度" prop="year">
-          <el-select v-model="form.year" placeholder="请选择年度" style="width:120px;">
-            <el-option label="2024年/年度" value="2024年/年度" />
-            <el-option label="2024年/上半年" value="2024年/上半年" />
-            <el-option label="2024年/下半年" value="2024年/下半年" />
-            <el-option label="2025年/年度" value="2025年/年度" />
-            <el-option label="2025年/上半年" value="2025年/上半年" />
-            <el-option label="2025年/下半年" value="2025年/下半年" />
-            <el-option label="2025年/一季度" value="2025年/一季度" />
-          </el-select>
+          <el-row :gutter="10">
+            <el-col :span="8">
+              <el-select v-model="yearValue" placeholder="请选择年份">
+                <el-option v-for="item in yearList" :key="item" :label="item+'年'" :value="item" />
+              </el-select>
+            </el-col>
+            <el-col :span="10">
+              <el-select v-model="periodValue" placeholder="请选择时间段">
+                <el-option v-for="item in periodList" :key="item" :label="item" :value="item" />
+              </el-select>
+            </el-col>
+          </el-row>
         </el-form-item>
         <el-form-item label="所属公司">
           <el-input v-model="form.company" placeholder="自动带入/可编辑" />
@@ -124,7 +130,7 @@
 </template>
 
 <script>
-import { createPlan, importPlanDetails, exportPlanDetails } from '@/api/plan'
+import { createPlan, addPlan, importPlanDetails, exportPlanDetails } from '@/api/plan'
 import ImportDialog from './ImportDialog.vue'
 
 export default {
@@ -146,6 +152,10 @@ export default {
           { required: true, message: '请选择所属年度', trigger: 'change' }
         ]
       },
+      yearList: this.generateYearList(),
+      periodList: ['年度', '上半年', '下半年', '一季度'],
+      yearValue: '',
+      periodValue: '',
       fileList: [],
       uploadUrl: process.env.VUE_APP_BASE_API + '/procurement-plans/attachments',
       uploadHeaders: {
@@ -155,7 +165,23 @@ export default {
       showImportDialog: false
     }
   },
+  watch: {
+    yearValue(val) { this.updateYearField(); },
+    periodValue(val) { this.updateYearField(); },
+  },
   methods: {
+    generateYearList() {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      return [currentYear, currentYear + 1, currentYear + 2];
+    },
+    updateYearField() {
+      if (this.yearValue && this.periodValue) {
+        this.form.year = `${this.yearValue}年/${this.periodValue}`;
+      } else {
+        this.form.year = '';
+      }
+    },
     handleAddDetail() {
       this.form.details.push({
         name: '',
@@ -217,9 +243,22 @@ export default {
     submitForm(type) {
       this.$refs.form.validate(valid => {
         if (!valid) return
+        if (!this.form.details || this.form.details.length === 0) {
+          this.$message.error('请至少填写一条计划明细')
+          return
+        }
+        // 标准化明细字段，确保与后端一致
+        const details = this.form.details.map(d => ({
+          itemName: d.itemName || d.name || '',
+          category: d.category || '',
+          method: d.method || '',
+          estimate: d.estimate || d.estimatedAmount || 0,
+          planTime: d.planTime || d.plannedTime || '',
+          fundSource: d.fundSource || '',
+          remark: d.remark || ''
+        }))
         const status = type === 'effect' ? '已生效' : '已保存'
-        const api = this.$route.query.mode === 'edit' ? updatePlan : addPlan
-        api({ ...this.form, status }).then(() => {
+        addPlan({ ...this.form, details, status }).then(() => {
           this.$message.success(type === 'effect' ? '生效成功' : '保存成功')
           this.$router.push({ name: 'PlanList' })
         })
@@ -227,6 +266,16 @@ export default {
     },
     goBack() {
       this.$router.push('/plan/list')
+    }
+  },
+  mounted() {
+    // 编辑时自动拆分
+    if (this.form.year) {
+      const match = this.form.year.match(/(\d{4})年\/(.+)/);
+      if (match) {
+        this.yearValue = match[1];
+        this.periodValue = match[2];
+      }
     }
   }
 }
